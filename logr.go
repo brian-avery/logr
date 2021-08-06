@@ -165,6 +165,7 @@ package logr
 
 import (
 	"context"
+	"fmt"
 )
 
 // New returns a new Logger instance.  This is primarily used by libraries
@@ -188,6 +189,15 @@ type Logger struct {
 	level         int
 	sink          LogSink
 	withCallDepth CallDepthLogSink
+}
+
+// BAVERY_HACK -- Prometheus relies on https://github.com/simonpasquier/klog-gokit/issues/20 which
+// overrides Kubernetes klog with a different interface that relies on an implementation of `log`.
+// Looking at the code, I don't believe this is used beyond fulfilling the interface (logr implements the logging differently),
+// but implementing it regardless.
+func (l Logger) Log(keysAndValues ...interface{}) error {
+	l.sink.Info(l.level, "Logger.Log was called when it should not be. Arguments were: %+v", keysAndValues)
+	return fmt.Errorf("Logger.Log was called when it should not be. Arguments were: %+v", keysAndValues)
 }
 
 // Enabled tests whether this Logger is enabled.  For example, commandline
